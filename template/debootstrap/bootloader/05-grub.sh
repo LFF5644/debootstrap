@@ -1,15 +1,31 @@
 if [ "$INSTALL_BOOTLOADER" = "grub-pc" ] && [ "$INSTALL_CHROOT_ONLY" = "false" ]; then
+	umount_bios(){
+		if [ $1 -ne 0 ]; then log "Error occurred during BIOS bootloader installation. Try to Find out or Fix it in shell, load 'source /debootstrap/config.env'. after exit it will clean mount points"; bash; sleep $1; exit 1; fi
+		log "Unmounting stuff for bios bootloader installation ..."
+		umount /boot
+		umount /mnt
+		log "Unmounting completed."
+	}
 	log "Installing Bootloader (BIOS/i386-pc)..."
 	apt_install "/debootstrap/bootloader/05-packages-grub-bios.txt"
 	mkdir -p /boot/grub
 	# Nur mounten, wenn separate /boot-Partition vorhanden ist
 	if [ -n "$BOOTLOADER_BIOS_PARTITION" ] && [ "$BOOTLOADER_BIOS_PARTITION" != "none" ]; then
-		log "Mounting /boot from $BOOTLOADER_BIOS_DEVICE..."
-		mount "$BOOTLOADER_BIOS_DEVICE" /boot -t auto
-	fi
+		log "Mounting /boot from $BOOTLOADER_BIOS_PARTITION..."
+		mount "$BOOTLOADER_BIOS_PARTITION" /boot -t auto
+		if [ $? -ne 0 ]; then log "Failed to mount /boot from $BOOTLOADER_BIOS_PARTITION. BIOS bootloader installation may fail."; umount_bios 15; fi
+	elif [ "$MOUNT_REAL_ROOT" = "true" ]; then
+		log "mounting real root partition $FSTAB_ROOT_DEVICE ($FSTAB_ROOT_DEVICE_TYPE) to /mnt for bios bootloader installation..."
+		mkdir -p /mnt
+		mount "$FSTAB_ROOT_DEVICE" /mnt -t $FSTAB_ROOT_DEVICE_TYPE -o "$FSTAB_ROOT_MOUNT_OPTIONS"
+		if [ $? -ne 0 ]; then log "Failed to mount real root partition $FSTAB_ROOT_DEVICE with -o '$FSTAB_ROOT_MOUNT_OPTIONS' to /mnt. BIOS bootloader installation may fail."; umount_bios 15; fi
+		mkdir -p /mnt$FSTAB_BOOT_DEVICE_MOUNTPOINT
+		mount --bind /mnt/boot /boot
+		if [ $? -ne 0 ]; then log "Failed to bind mount /mnt/boot to /boot. BIOS bootloader installation may fail."; umount_bios 15; fi
 	time update-initramfs -u
-	grub-install --target=i386-pc --boot-directory=/boot "$BOOTLOADER_BIOS_DEVICE_INSTALL"
-	if [ $? -ne 0 ]; then log "grub-install failed. BIOS bootloader installation may have failed. Please fix the issue manually."; sleep 60; exit 1; fi
+	grub-install --target=i386-pc --boot-directory=/boot "$BOOTLOADER_BIOS_DEVICE"
+	if [ $? -ne 0 ]; then log "grub-install failed. BIOS bootloader installation may have failed. Please fix the issue manually."; umount_bios 15; exit 1; fi
+	umount_bios 0
 
 elif [ "$INSTALL_BOOTLOADER" = "grub-efi" ]; then
 	umount_efi(){
@@ -34,9 +50,8 @@ elif [ "$INSTALL_BOOTLOADER" = "grub-efi" ]; then
 		echo 'type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B' | sfdisk $BOOTLOADER_EFI_PARTITION --part-label N "EFI System Partition"
 		mkfs.vfat -F 32 -n EFI $BOOTLOADER_EFI_PARTITION
 		
-		# Auslesen der UUID und in Variable speichern
-		UUID=$(blkid -s UUID -o value "$BOOTLOADER_EFI_PARTITION") # wont work!!
-		FSTAB_BOOT_DEVICE="UUID=${UUID}"
+		UUID=$(blkid -s UUID -o value "$BOOTLOADER_EFI_PARTITION")
+		FSTAB_BOOT_EFI_DEVICE="UUID=${UUID}"
 		log "formatted!, EFI partition UUID: $UUID"
 	fi
 
@@ -51,10 +66,10 @@ elif [ "$INSTALL_BOOTLOADER" = "grub-efi" ]; then
 	fi
 
 	if [ "$MOUNT_REAL_BOOT" = "true" ]; then
-		log "Mounting real BOOT partition $FSTAB_BOOT_DEVICE to /boot..."
+		log "Mounting real BOOT partition $FSTAB_BOOT_EFI_DEVICE to /boot/efi..."
 		mkdir -p /boot/efi
-		mount "$FSTAB_BOOT_DEVICE" /boot/efi -t vfat
-		if [ $? -ne 0 ]; then log "Failed to mount real boot partition $FSTAB_BOOT_DEVICE to /boot/efi. EFI bootloader installation may fail."; umount_efi 15; fi
+		mount "$FSTAB_BOOT_EFI_DEVICE" /boot/efi -t vfat
+		if [ $? -ne 0 ]; then log "Failed to mount real boot partition $FSTAB_BOOT_EFI_DEVICE to /boot/efi. EFI bootloader installation may fail."; umount_efi 15; fi
 	fi
 
 	#testing partition mounts
