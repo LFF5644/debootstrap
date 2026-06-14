@@ -1,3 +1,15 @@
+update_grub(){
+	log "hacking grub-probe ..."
+	mv /sbin/grub-probe /debootstrap/backup/
+	echo -e "#!/bin/bash\n echo '$(/debootstrap/backup/grub-probe /boot)';exit 0" > /sbin/grub-probe
+	chmod +x /sbin/grub-probe
+	log "hacked! update-grub ..."
+	update-grub
+	if [ $? -ne 0 ]; then log "Error with grub-update! fix it! continue ..."; sleep 15; fi
+	log "restore not hacked grub-probe ..."
+	rm /sbin/grub-probe; mv /debootstrap/backup/grub-probe /sbin/
+	log "restored."
+}
 if [ "$INSTALL_BOOTLOADER" = "grub-pc" ] && [ "$INSTALL_CHROOT_ONLY" = "false" ]; then
 	umount_bios(){
 		if [ $1 -ne 0 ]; then log "Error occurred during BIOS bootloader installation. Try to Find out or Fix it in shell, load 'source /debootstrap/config.env'. after exit it will clean mount points"; bash; exit 1; fi
@@ -23,9 +35,12 @@ if [ "$INSTALL_BOOTLOADER" = "grub-pc" ] && [ "$INSTALL_CHROOT_ONLY" = "false" ]
 		mount --bind /mnt/boot /boot
 		if [ $? -ne 0 ]; then log "Failed to bind mount /mnt/boot to /boot. BIOS bootloader installation may fail."; umount_bios 15; fi
 	fi
-	time update-initramfs -u
+	log "Install Bootloader to $BOOTLOADER_BIOS_DEVICE ..."
 	grub-install --target=i386-pc --boot-directory=/boot "$BOOTLOADER_BIOS_DEVICE"
 	if [ $? -ne 0 ]; then log "grub-install failed. BIOS bootloader installation may have failed. Please fix the issue manually."; umount_bios 15; exit 1; fi
+	log "Update grub config ..."
+	update_grub
+	if [ $? -ne 0 ]; then log "update-grub failed."; umount_bios 15; exit 1; fi
 	umount_bios 0
 
 elif [ "$INSTALL_BOOTLOADER" = "grub-efi" ]; then
@@ -92,5 +107,6 @@ elif [ "$INSTALL_BOOTLOADER" = "grub-efi" ]; then
 		if [ $? -ne 0 ]; then log "grub-install with --removable also failed. EFI bootloader installation has likely failed. Please fix the issue manually."; umount_efi 15; fi
 	fi
 	log "GRUB EFI bootloader installation completed with code '$?' JUU!"
+	update_grub
 	umount_efi 0
 fi
