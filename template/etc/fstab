@@ -1,0 +1,14 @@
+# File template /media/storage/Dateien/Dokus/Linux/scripts/debootstrap/template/etc/fstab
+
+# Use for main-filesystem mount
+#UUID=XXX / btrfs noatime,nodiratime,compress=zstd:3,ssd,subvol=linux,space_cache=v2 0 0
+
+# Use for efi
+#UUID=XXX  /boot/efi vfat umask=0077 0 1
+
+# if u use or have any swap-parts
+#UUID=XXX none swap sw 0 0
+
+# Tempfs (memory)
+tmpfs /tmp tmpfs nosuid,noatime,nodiratime,size=6g 0 0
+tmpfs /var/log tmpfs nosuid,noatime,nodiratime,size=500m 0 0

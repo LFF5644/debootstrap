@@ -1,0 +1,21 @@
+# handbrake
+# kdeconnect
+# keepass2
+# keepassxc
+# libreoffice
+# obs-studio
+# python3-tk
+# unison-gtk
+# webapp-manager
+# wine
+audacity
+firefox-esr
+git
+gnome-disk-utility
+gparted
+hdparm
+pkexec
+qdirstat
+remmina
+sublime-text
+vlc

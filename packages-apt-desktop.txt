@@ -1,0 +1,8 @@
+# firmware-intel-graphics
+# firmware-misc-nonfree
+
+nodejs
+npm
+
+
+

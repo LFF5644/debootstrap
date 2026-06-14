@@ -1,0 +1,5 @@
+vim-common
+vim-tiny
+vim
+logrotate
+logsave

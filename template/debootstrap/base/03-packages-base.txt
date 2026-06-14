@@ -1,0 +1,17 @@
+adduser
+apt-listchanges
+apt-utils
+base-files
+bash
+bash-completion
+busybox
+console-setup
+hostname
+keyboard-configuration
+mount
+nano
+sudo
+less
+debconf
+debian-archive-keyring
+fdisk

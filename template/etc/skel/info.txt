@@ -1,0 +1,3 @@
+HIII debootstrap installed system by LFF5644 2026 JUUUHH!
+look at this (dont forget hidden files xD)
+$ ls -lah $HOME /etc/skel

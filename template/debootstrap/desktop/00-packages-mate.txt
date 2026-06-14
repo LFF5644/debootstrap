@@ -1,0 +1,14 @@
+mate-desktop-environment-core
+mate-applets
+mate-desktop-environment-core
+mate-icon-theme
+mate-notification-daemon
+mate-panel
+mate-power-manager
+mate-sensors-applet
+mate-sensors-applet
+mate-system-monitor
+mate-terminal
+mate-themes
+mate-utils
+mint-y-icons

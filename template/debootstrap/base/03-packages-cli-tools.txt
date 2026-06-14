@@ -1,0 +1,25 @@
+# nodejs
+# npm
+# python3
+
+7zip
+adb
+btrfs-progs
+bzip2
+cmatrix
+dconf-cli
+fdisk
+grep
+gzip
+htop
+less
+linux-cpupower
+nano
+ntfs-3g
+rsync
+screen
+tar
+unzip
+xxd
+xz-utils
+zstd

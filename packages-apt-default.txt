@@ -1,0 +1,24 @@
+# bind9-dnsutils
+# bind9-host
+# binutils
+# grub-common
+# grub-efi-amd64
+# intel-microcode
+# libbluetooth-dev
+# nvidia-driver
+# nvtop
+# openjdk-21-jre-headless
+# python3
+# python3-pip
+# squashfs-tools
+# systemd-sysv
+# sysvinit-utils
+# task-german
+# tasksel
+# wtmpdb
+
+cpio
+
+
+
+

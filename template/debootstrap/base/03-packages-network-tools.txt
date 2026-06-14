@@ -1,0 +1,17 @@
+# $ 'ip'
+iproute2
+net-tools
+# $ 'ping'
+iputils-ping
+# inetutils-ping
+
+# Tools
+wget
+netcat-openbsd
+openssh-client
+iperf3
+
+systemd
+systemd-resolved
+systemd-timesyncd
+sshfs

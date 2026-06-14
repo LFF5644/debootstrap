@@ -1,0 +1,12 @@
+
+# isc-dhcp-client
+# dhcpcd-base
+
+bind9-dnsutils
+# bind9-host
+
+systemd-networkd
+
+
+# stand alone network manager
+# ifupdown

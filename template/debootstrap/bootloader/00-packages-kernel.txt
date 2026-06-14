@@ -1,0 +1,8 @@
+init
+initramfs-tools
+kmod
+laptop-detect
+linux-image-amd64
+linux-sysctl-defaults
+lm-sensors
+login
