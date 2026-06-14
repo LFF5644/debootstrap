@@ -18,3 +18,4 @@ pkexec
 qdirstat
 remmina
 vlc
+mixxx

@@ -12,3 +12,4 @@ mate-terminal
 mate-themes
 mate-utils
 mint-y-icons
+lightdm
