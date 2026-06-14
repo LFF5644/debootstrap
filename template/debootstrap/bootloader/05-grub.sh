@@ -1,18 +1,15 @@
 if [ "$INSTALL_BOOTLOADER" = "grub-pc" ] && [ "$INSTALL_CHROOT_ONLY" = "false" ]; then
-	log "Installing Bootloader (BIOS/i386-pc)... NOT IMPLEMENTED YET!"
-	sleep 15
-	exit 1
-
 	log "Installing Bootloader (BIOS/i386-pc)..."
 	apt_install "/debootstrap/bootloader/05-packages-grub-bios.txt"
 	mkdir -p /boot/grub
 	# Nur mounten, wenn separate /boot-Partition vorhanden ist
-	if [ -n "$INSTALL_BOOTLOADER_DEVICE" ] && [ "$INSTALL_BOOTLOADER_DEVICE" != "NONE" ]; then
-		log "Mounting /boot from $INSTALL_BOOTLOADER_DEVICE..."
-		mount "$INSTALL_BOOTLOADER_DEVICE" /boot -t auto
+	if [ -n "$BOOTLOADER_BIOS_PARTITION" ] && [ "$BOOTLOADER_BIOS_PARTITION" != "none" ]; then
+		log "Mounting /boot from $BOOTLOADER_BIOS_DEVICE..."
+		mount "$BOOTLOADER_BIOS_DEVICE" /boot -t auto
 	fi
 	time update-initramfs -u
-	grub-install --target=i386-pc --boot-directory=/boot "$INSTALL_BOOTLOADER_DEVICE_INSTALL"
+	grub-install --target=i386-pc --boot-directory=/boot "$BOOTLOADER_BIOS_DEVICE_INSTALL"
+	if [ $? -ne 0 ]; then log "grub-install failed. BIOS bootloader installation may have failed. Please fix the issue manually."; sleep 60; exit 1; fi
 
 elif [ "$INSTALL_BOOTLOADER" = "grub-efi" ]; then
 	umount_efi(){
@@ -68,7 +65,7 @@ elif [ "$INSTALL_BOOTLOADER" = "grub-efi" ]; then
 
 	mkdir -p /boot/grub
 	#time update-initramfs -u
-	log "Installing GRUB EFI bootloader to $INSTALL_BOOTLOADER_DEVICE_INSTALL..."
+	log "Installing GRUB EFI bootloader to $BOOTLOADER_EFI_PARTITION..."
 	grub-install --target=x86_64-efi --efi-directory=/boot/efi --boot-directory=/boot --bootloader-id=LFF-Linux
 	if [ $? -ne 0 ]; then
 		log "grub-install failed. EFI bootloader installation may have failed.\nRetrying with --removable option... STRG+C to abort and fix the issue manually.";
