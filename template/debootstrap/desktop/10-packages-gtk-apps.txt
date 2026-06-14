@@ -17,5 +17,4 @@ hdparm
 pkexec
 qdirstat
 remmina
-sublime-text
 vlc
