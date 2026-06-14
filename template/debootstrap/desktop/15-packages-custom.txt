@@ -2,3 +2,4 @@ sublime-text
 spotify-client
 discord
 lff-picture-selector-v2
+redshift
