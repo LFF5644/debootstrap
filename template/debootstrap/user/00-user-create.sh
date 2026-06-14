@@ -1,4 +1,4 @@
-if ["$NEW_USER" != "none"]; then
+if [ "$NEW_USER" != "none" ]; then
 	log "Creating user $NEW_USER ... enter name, password and other infos."
 	adduser "$NEW_USER"
 

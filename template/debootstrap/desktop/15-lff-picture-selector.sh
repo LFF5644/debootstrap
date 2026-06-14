@@ -9,14 +9,14 @@ if contains_package "/debootstrap/desktop/15-packages-custom.txt" "lff-picture-s
 	rm -r /tmp/PictureSelectorV2.zip /tmp/PictureSelector-unzipped /opt/PictureSelector/start_windows.vbs
 	
 	log "Installing PictureSelectorV2 service for background-running & autostart..."
-	mkdir -p /etc/skel/.config/systemd/user/
-	wget -O /etc/skel/.config/systemd/user/pictureSelectorV2.service "https://github.com/LFF5644/PictureSelector/releases/download/v2.0/pictureSelectorV2.service"
+	mkdir -p /etc/systemd/user/
+	wget -O /etc/systemd/user/pictureSelectorV2.service "https://github.com/LFF5644/PictureSelector/releases/download/v2.0/pictureSelectorV2.service"
 
 	log "installing node modules for PictureSelectorV2..."
 	cd /opt/PictureSelector; npm install; cd -
 	
 	log "Enabling PictureSelectorV2 (for new users)..."
-	mkdir -p /etc/skel/.config/systemd/user/default.target.wants
-	ln -s ../pictureSelectorV2.service /etc/skel/.config/systemd/user/default.target.wants/
+	mkdir -p /etc/systemd/user/default.target.wants
+	ln -s ../pictureSelectorV2.service /etc/systemd/user/default.target.wants/
 	log "Installation of lff-picture-selector completed."
 fi
