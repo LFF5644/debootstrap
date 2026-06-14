@@ -20,6 +20,8 @@ echo mounting / binding to chroot...
 sudo mount --bind /dev $target_root/dev
 sudo mount --bind /proc $target_root/proc
 sudo mount --bind /sys $target_root/sys
+sudo mkdir -p $target_root/dev/pts
+sudo mount -t devpts devpts $target_root/dev/pts
 
 echo now ruinning in shroot...
 time sudo chroot $target_root bash /debootstrap/install.sh
@@ -28,6 +30,7 @@ echo finishing! now u cat use the terminal.
 sudo chroot $target_root bash
 
 echo unmounting / unbinding ...
+sudo umount $target_root/dev/pts
 sudo umount $target_root/dev
 sudo umount $target_root/proc
 sudo umount $target_root/sys
