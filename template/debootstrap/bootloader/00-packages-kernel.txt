@@ -1,3 +1,4 @@
+btrfs-progs
 init
 initramfs-tools
 kmod
@@ -6,3 +7,4 @@ linux-image-amd64
 linux-sysctl-defaults
 lm-sensors
 login
+zstd
