@@ -1,6 +1,6 @@
 if [ "$INSTALL_BOOTLOADER" = "grub-pc" ] && [ "$INSTALL_CHROOT_ONLY" = "false" ]; then
 	umount_bios(){
-		if [ $1 -ne 0 ]; then log "Error occurred during BIOS bootloader installation. Try to Find out or Fix it in shell, load 'source /debootstrap/config.env'. after exit it will clean mount points"; bash; sleep $1; exit 1; fi
+		if [ $1 -ne 0 ]; then log "Error occurred during BIOS bootloader installation. Try to Find out or Fix it in shell, load 'source /debootstrap/config.env'. after exit it will clean mount points"; bash; exit 1; fi
 		log "Unmounting stuff for bios bootloader installation ..."
 		umount /boot
 		umount /mnt
@@ -19,9 +19,10 @@ if [ "$INSTALL_BOOTLOADER" = "grub-pc" ] && [ "$INSTALL_CHROOT_ONLY" = "false" ]
 		mkdir -p /mnt
 		mount "$FSTAB_ROOT_DEVICE" /mnt -t $FSTAB_ROOT_DEVICE_TYPE -o "$FSTAB_ROOT_MOUNT_OPTIONS"
 		if [ $? -ne 0 ]; then log "Failed to mount real root partition $FSTAB_ROOT_DEVICE with -o '$FSTAB_ROOT_MOUNT_OPTIONS' to /mnt. BIOS bootloader installation may fail."; umount_bios 15; fi
-		mkdir -p /mnt$FSTAB_BOOT_DEVICE_MOUNTPOINT
+		mkdir -p /mnt/boot
 		mount --bind /mnt/boot /boot
 		if [ $? -ne 0 ]; then log "Failed to bind mount /mnt/boot to /boot. BIOS bootloader installation may fail."; umount_bios 15; fi
+	fi
 	time update-initramfs -u
 	grub-install --target=i386-pc --boot-directory=/boot "$BOOTLOADER_BIOS_DEVICE"
 	if [ $? -ne 0 ]; then log "grub-install failed. BIOS bootloader installation may have failed. Please fix the issue manually."; umount_bios 15; exit 1; fi
