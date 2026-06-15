@@ -1,0 +1,6 @@
+# Will enable DHCP on all Ethernet network-cards, default config from debootstrap.
+[Match]
+Type=ether
+
+[Network]
+DHCP=yes
