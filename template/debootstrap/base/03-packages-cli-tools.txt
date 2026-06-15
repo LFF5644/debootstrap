@@ -7,7 +7,6 @@ adb
 btrfs-progs
 bzip2
 cmatrix
-dconf-cli
 fdisk
 grep
 gzip
