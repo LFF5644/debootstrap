@@ -1,6 +1,7 @@
 #!/bin/bash
 echo loading config...
 source config.env
+source secrets.env
 
 PACKAGES_INCLUDE=$(grep -vE '^\s*#|^\s*$' packages-include.txt | tr '\n' ',' | sed 's/,$//')
 PACKAGES_EXCLUDE=$(grep -vE '^\s*#|^\s*$' packages-exclude.txt | tr '\n' ',' | sed 's/,$//')
