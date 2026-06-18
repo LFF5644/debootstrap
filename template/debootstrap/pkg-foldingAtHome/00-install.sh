@@ -1,6 +1,6 @@
 if contains_package "/debootstrap/pkg-foldingAtHome/00-packages.txt" "folding-at-home-client"; then
 	log "Folding@Home is selected for install ..."
-	wget --no-check-certificate -O /tmp/fah-client.tar.bz2 "$FAH_DOWNLOAD_CURRENT"
+	download "$FAH_DOWNLOAD_CURRENT" /tmp/fah-client.tar.bz2
 	if [ $? -ne 0 ]; then log "Failed to download Folding@Home"; exit 1; fi
 	
 	log "extracting downloaded .tar.bz2 ..."
