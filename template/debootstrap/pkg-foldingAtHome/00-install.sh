@@ -40,5 +40,5 @@ if contains_package "/debootstrap/pkg-foldingAtHome/00-packages.txt" "folding-at
 		ls -lah /var/lib/fah-client/client.db
 	fi
 	log "Folding at Home Client installation finished."
-	exit 0
+
 fi
