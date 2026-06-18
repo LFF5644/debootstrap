@@ -14,4 +14,4 @@ iperf3
 systemd
 systemd-resolved
 systemd-timesyncd
-sshfs
+# sshfs

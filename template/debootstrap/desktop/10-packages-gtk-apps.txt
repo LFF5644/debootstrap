@@ -19,3 +19,4 @@ qdirstat
 remmina
 vlc
 mixxx
+# redshift-gtk
