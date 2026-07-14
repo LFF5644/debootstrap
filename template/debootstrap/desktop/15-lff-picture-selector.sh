@@ -1,4 +1,4 @@
-if contains_package "/debootstrap/desktop/15-packages-custom.txt" "lff-picture-selector"; then
+if [ "$INSTALL_DESKTOP_PACKAGES" = "true" ] && contains_package "/debootstrap/desktop/15-packages-custom.txt" "lff-picture-selector"; then
 	log "Installing lff-picture-selector..."
 	apt install nodejs npm -y
 	log "Downloading PictureSelectorV2 from GitHub ( https://github.com/LFF5644/PictureSelector ) ..."
