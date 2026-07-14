@@ -9,8 +9,13 @@ PACKAGES_EXCLUDE=$(grep -vE '^\s*#|^\s*$' packages-exclude.txt | tr '\n' ',' | s
 
 echo include packages: $PACKAGES_INCLUDE
 echo exclude packages: $PACKAGES_EXCLUDE
-
+http_proxy=$proxy
+https_proxy=$proxy
 time sudo -E debootstrap --arch=amd64 --include="$PACKAGES_INCLUDE" --exclude="$PACKAGES_EXCLUDE" --variant=minbase trixie $target_root http://deb.debian.org/debian
+unset PACKAGES_INCLUDE
+unset PACKAGES_EXCLUDE
+unset http_proxy
+unset https_proxy
 
 echo strating with template copy...
 time sudo cp -rvTL template $target_root
