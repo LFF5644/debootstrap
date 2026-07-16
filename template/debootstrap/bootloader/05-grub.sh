@@ -7,7 +7,8 @@ update_grub(){
 	chmod +x /sbin/grub-probe
 	log "hacked! update-grub ..."
 	update-grub
-	if [ $? -ne 0 ] && [ ! -f "$boot_directory/grub/grub.cfg" ] && [ ! -f "/boot/grub/grub.cfg" ]; then
+	a=1
+	if [ $a = 1 ]; then # [ $? -ne 0 ] && [ ! -f "$boot_directory/grub/grub.cfg" ] && [ ! -f "/boot/grub/grub.cfg" ] # disabled, because grub-update can fail but still create a working grub.cfg
 		# NOTE: /boot (tmpfs), $boot_directory (real device); later tmpfs will be copied to real device and overwrite everything existing.
 		log "Error with grub-update! using hack xD";
 		log "Creating vmlinuz & initrd.img symbolic links in /boot..."
@@ -16,7 +17,9 @@ update_grub(){
 		ln -sf $(ls initrd.img-* initramfs-* 2>/dev/null | sort -V | tail -n 1) initrd.img # Erstellt den Link für die Initrd / Initramfs
 		cd "-"; ls -lah /boot;
 		log "links created. building hacky grub.cfg...";
-		SUBVOLUME="/linux" # REALY HACKY TODO PARSE FROM $FSTAB_ROOT_MOUNT_OPTIONS
+		[ -f "$boot_directory/grub/grub.cfg" ] && { log "moving existing config away... '$boot_directory/grub/grub.cfg' (device) --> 'grub.unknown.cfg'"; mv "$boot_directory/grub/grub.cfg" "$boot_directory/grub/grub.unknown.cfg"; }
+		[ -f "/boot/grub/grub.cfg" ] && { log "moving existing config away... '/boot/grub/grub.cfg' (tmpfs) --> 'grub.auto.cfg'"; mv "/boot/grub/grub.cfg" "/boot/grub/grub.auto.cfg"; }
+		SUBVOLUME=$(echo ",$FSTAB_ROOT_MOUNT_OPTIONS," | sed -n 's/.*,subvol=\([^,]*\),.*/\/\1/p')
 		cat << EOF > "$boot_directory/grub/grub.cfg"
 # Funny Note: Hey ähm wenn du das siehst hast du mich ganz schön beim basteln erwischt, mist! Führe 'sudo update-grub' aus ums zu 'heilen' xD
 # Technical Note: Yeah that was my try to make an minimal booting grub.cfg, hope it worked; that is just for once use update-grub to create original one ;-)
@@ -29,27 +32,27 @@ echo "loading modules into bootloader..."
 insmod play
 insmod part_gpt
 insmod part_msdos
-insmod btrfs
-insmod fat
-insmod ext4
+insmod $FSTAB_ROOT_DEVICE_TYPE
 set timeout=0
 set default=0
 set btrfs_relative_path=y
 echo searching and selecting kernel...
 search --no-floppy --fs-uuid --set=root ${FSTAB_ROOT_DEVICE:5}
 echo loading kernel ($SUBVOLUME/vmlinuz) into memory...
-linux $SUBVOLUME/vmlinuz root=$FSTAB_ROOT_DEVICE rootflags=$FSTAB_ROOT_MOUNT_OPTIONS $KERNEL_CMDLINE
+linux $SUBVOLUME/boot/vmlinuz root=$FSTAB_ROOT_DEVICE rootflags=$FSTAB_ROOT_MOUNT_OPTIONS $KERNEL_CMDLINE
 echo loading initramfs ($SUBVOLUME/initrd.img) into memory...
-initrd $SUBVOLUME/initrd.img
+initrd $SUBVOLUME/boot/initrd.img
 echo OK.
 echo playing sound...
 play 480 440 4 440 4 440 4 349 3 523 1 440 4 349 3 523 1 440 8 659 4 659 4 659 4 698 3 523 1 415 4 349 3 523 1 440 8
 echo booting loaded kernel...
 boot
 EOF
-		echo "hacky grub.cfg created."
+		log "hacky grub.cfg created. continue..."
 		sleep 15;
-	elif [ $? -ne 0 ] && [[ -f "/boot/grub/grub.cfg" || -f "$boot_directory/grub/grub.cfg" ]]; then log "Error with grub-update! using hack xD\nINFO: /boot/grub/grub.cfg exists, maybe u have luck and it will boot! continue ..."; sleep 15;
+	elif [ $? -ne 0 ] && [[ -f "/boot/grub/grub.cfg" || -f "$boot_directory/grub/grub.cfg" ]]; then
+		log "Error with grub-update! using hack xD\nINFO: /boot/grub/grub.cfg exists, maybe u have luck and it will boot! continue ...";
+		sleep 15;
 	else log "internal 'if' error in script: $SCRIPT"; sleep 15; exit 1;
 	fi
 
@@ -61,8 +64,7 @@ if [ "$INSTALL_BOOTLOADER" = "grub-pc" ] && [ "$INSTALL_CHROOT_ONLY" = "false" ]
 	umount_bios(){
 		if [ $1 -ne 0 ]; then log "Error occurred during BIOS bootloader installation. Try to Find out or Fix it in shell, load 'source /debootstrap/config.env'. after exit it will clean mount points"; bash; exit 1; fi
 		log "Unmounting stuff for bios bootloader installation ..."
-		umount -q /mnt/linux
-		umount -q /mnt/boot
+		umount -q -A /mnt/linux
 		log "Unmounting completed."
 	}
 	log "Installing Bootloader (BIOS/i386-pc)..."
