@@ -1,11 +1,58 @@
+boot_directory=none
+
 update_grub(){
 	log "hacking grub-probe ..."
 	mv /sbin/grub-probe /debootstrap/backup/
-	echo -e "#!/bin/bash\n echo '$(/debootstrap/backup/grub-probe /boot)';exit 0" > /sbin/grub-probe
+	echo -e "#!/bin/bash\n echo '$FSTAB_ROOT_DEVICE_TYPE';exit 0" > /sbin/grub-probe
 	chmod +x /sbin/grub-probe
 	log "hacked! update-grub ..."
 	update-grub
-	if [ $? -ne 0 ]; then log "Error with grub-update! fix it! continue ..."; sleep 15; fi
+	if [ $? -ne 0 ] && [ ! -f "$boot_directory/grub/grub.cfg" ] && [ ! -f "/boot/grub/grub.cfg" ]; then
+		# NOTE: /boot (tmpfs), $boot_directory (real device); later tmpfs will be copied to real device and overwrite everything existing.
+		log "Error with grub-update! using hack xD";
+		log "Creating vmlinuz & initrd.img symbolic links in /boot..."
+		cd /boot;
+		ln -sf $(ls vmlinuz-* | sort -V | tail -n 1) vmlinuz # Erstellt den Link für den Kernel
+		ln -sf $(ls initrd.img-* initramfs-* 2>/dev/null | sort -V | tail -n 1) initrd.img # Erstellt den Link für die Initrd / Initramfs
+		cd "-"; ls -lah /boot;
+		log "links created. building hacky grub.cfg...";
+		SUBVOLUME="/linux" # REALY HACKY TODO PARSE FROM $FSTAB_ROOT_MOUNT_OPTIONS
+		cat << EOF > "$boot_directory/grub/grub.cfg"
+# Funny Note: Hey ähm wenn du das siehst hast du mich ganz schön beim basteln erwischt, mist! Führe 'sudo update-grub' aus ums zu 'heilen' xD
+# Technical Note: Yeah that was my try to make an minimal booting grub.cfg, hope it worked; that is just for once use update-grub to create original one ;-)
+# Note: This File was Created by https://github.com/LFF5644/debootstrap/ at $(date).
+echo "welcome into grub, if u see that text longer then 10s something went wrong :-("
+echo "if that will happen just google or ask any ai 'grub boot not working, shell manuell boot.' that should help you. :)"
+echo "in any case: after this BOOTs up run $ sudo update-grub if /boot/grub/grub.cfg is not changed."
+echo ""
+echo "loading modules into bootloader..."
+insmod play
+insmod part_gpt
+insmod part_msdos
+insmod btrfs
+insmod fat
+insmod ext4
+set timeout=0
+set default=0
+set btrfs_relative_path=y
+echo searching and selecting kernel...
+search --no-floppy --fs-uuid --set=root ${FSTAB_ROOT_DEVICE:5}
+echo loading kernel ($SUBVOLUME/vmlinuz) into memory...
+linux $SUBVOLUME/vmlinuz root=$FSTAB_ROOT_DEVICE rootflags=$FSTAB_ROOT_MOUNT_OPTIONS $KERNEL_CMDLINE
+echo loading initramfs ($SUBVOLUME/initrd.img) into memory...
+initrd $SUBVOLUME/initrd.img
+echo OK.
+echo playing sound...
+play 480 440 4 440 4 440 4 349 3 523 1 440 4 349 3 523 1 440 8 659 4 659 4 659 4 698 3 523 1 415 4 349 3 523 1 440 8
+echo booting loaded kernel...
+boot
+EOF
+		echo "hacky grub.cfg created."
+		sleep 15;
+	elif [ $? -ne 0 ] && [[ -f "/boot/grub/grub.cfg" || -f "$boot_directory/grub/grub.cfg" ]]; then log "Error with grub-update! using hack xD\nINFO: /boot/grub/grub.cfg exists, maybe u have luck and it will boot! continue ..."; sleep 15;
+	else log "internal 'if' error in script: $SCRIPT"; sleep 15; exit 1;
+	fi
+
 	log "restore not hacked grub-probe ..."
 	rm /sbin/grub-probe; mv /debootstrap/backup/grub-probe /sbin/
 	log "restored."
@@ -14,8 +61,8 @@ if [ "$INSTALL_BOOTLOADER" = "grub-pc" ] && [ "$INSTALL_CHROOT_ONLY" = "false" ]
 	umount_bios(){
 		if [ $1 -ne 0 ]; then log "Error occurred during BIOS bootloader installation. Try to Find out or Fix it in shell, load 'source /debootstrap/config.env'. after exit it will clean mount points"; bash; exit 1; fi
 		log "Unmounting stuff for bios bootloader installation ..."
-		umount /boot
-		umount /mnt
+		umount -q /mnt/linux
+		umount -q /mnt/boot
 		log "Unmounting completed."
 	}
 	log "Installing Bootloader (BIOS/i386-pc)..."
@@ -23,27 +70,35 @@ if [ "$INSTALL_BOOTLOADER" = "grub-pc" ] && [ "$INSTALL_CHROOT_ONLY" = "false" ]
 	mkdir -p /boot/grub
 	# Nur mounten, wenn separate /boot-Partition vorhanden ist
 	if [ -n "$BOOTLOADER_BIOS_PARTITION" ] && [ "$BOOTLOADER_BIOS_PARTITION" != "none" ]; then
-		log "Mounting /boot from $BOOTLOADER_BIOS_PARTITION..."
-		mount "$BOOTLOADER_BIOS_PARTITION" /boot -t auto
-		if [ $? -ne 0 ]; then log "Failed to mount /boot from $BOOTLOADER_BIOS_PARTITION. BIOS bootloader installation may fail."; umount_bios 15; fi
-	elif [ "$MOUNT_REAL_ROOT" = "true" ]; then
-		log "mounting real root partition $FSTAB_ROOT_DEVICE ($FSTAB_ROOT_DEVICE_TYPE) to /mnt for bios bootloader installation..."
-		mkdir -p /mnt
-		mount "$FSTAB_ROOT_DEVICE" /mnt -t $FSTAB_ROOT_DEVICE_TYPE -o "$FSTAB_ROOT_MOUNT_OPTIONS"
-		if [ $? -ne 0 ]; then log "Failed to mount real root partition $FSTAB_ROOT_DEVICE with -o '$FSTAB_ROOT_MOUNT_OPTIONS' to /mnt. BIOS bootloader installation may fail."; umount_bios 15; fi
+		log "Mounting /boot from $BOOTLOADER_BIOS_PARTITION to /mnt/boot for bootloader install..."
 		mkdir -p /mnt/boot
-		mount --bind /mnt/boot /boot
-		if [ $? -ne 0 ]; then log "Failed to bind mount /mnt/boot to /boot. BIOS bootloader installation may fail."; umount_bios 15; fi
+		mount "$BOOTLOADER_BIOS_PARTITION" /mnt/boot -t auto
+		if [ $? -ne 0 ]; then log "Failed to mount /boot from $BOOTLOADER_BIOS_PARTITION. BIOS bootloader installation may fail."; umount_bios 15;
+		else boot_directory=/mnt/boot; fi
+	elif [ "$MOUNT_REAL_ROOT" = "true" ]; then
+		log "mounting real root partition $FSTAB_ROOT_DEVICE ($FSTAB_ROOT_DEVICE_TYPE) to /mnt/linux for bios bootloader installation..."
+		mkdir -p /mnt/linux
+		mount "$FSTAB_ROOT_DEVICE" /mnt/linux -t $FSTAB_ROOT_DEVICE_TYPE -o "$FSTAB_ROOT_MOUNT_OPTIONS"
+		if [ $? -ne 0 ]; then log "Failed to mount real root partition $FSTAB_ROOT_DEVICE with -o '$FSTAB_ROOT_MOUNT_OPTIONS' to /mnt/linux. BIOS bootloader installation may fail."; umount_bios 15
+		else boot_directory=/mnt/linux/boot; fi
+	else
+		log "Can not mount, but access to '/boot' is required!";
+		umount_bios 15;
+		exit 1;
 	fi
-	log "Install Bootloader to $BOOTLOADER_BIOS_DEVICE ..."
-	grub-install --target=i386-pc --boot-directory=/boot "$BOOTLOADER_BIOS_DEVICE"
-	if [ $? -ne 0 ]; then log "grub-install failed. BIOS bootloader installation may have failed. Please fix the issue manually."; umount_bios 15; exit 1; fi
+	log "Install Bootloader to '$boot_directory' on device $BOOTLOADER_BIOS_DEVICE ..."
+	grub-install --target=i386-pc --boot-directory=$boot_directory "$BOOTLOADER_BIOS_DEVICE"
+	if [ $? -ne 0 ]; then log "grub-install failed. BIOS bootloader installation may have failed on '$BOOTLOADER_BIOS_DEVICE'. Please fix the issue manually."; umount_bios 15; exit 1; fi
 	log "Update grub config ..."
 	update_grub
 	if [ $? -ne 0 ]; then log "update-grub failed."; umount_bios 15; exit 1; fi
 	umount_bios 0
 
 elif [ "$INSTALL_BOOTLOADER" = "grub-efi" ]; then
+	#boot_directory=/mnt/boot/efi # TODO
+	log efi boot?? IHHH was das den! baue ich später ein sry xxD
+	exit 1;
+
 	umount_efi(){
 		if [ $1 -ne 0 ]; then log "Error occurred during EFI bootloader installation. Try to Find out or Fix it in shell, load 'source /debootstrap/config.env'. after exit it will clean mount points"; bash; sleep $1; exit 1; fi
 		log "Unmounting stuff for efi bootloader installation ..."
