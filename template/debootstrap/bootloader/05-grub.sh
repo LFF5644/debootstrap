@@ -19,7 +19,30 @@ update_grub(){
 		log "links created. building hacky grub.cfg...";
 		[ -f "$boot_directory/grub/grub.cfg" ] && { log "moving existing config away... '$boot_directory/grub/grub.cfg' (device) --> 'grub.unknown.cfg'"; mv "$boot_directory/grub/grub.cfg" "$boot_directory/grub/grub.unknown.cfg"; }
 		[ -f "/boot/grub/grub.cfg" ] && { log "moving existing config away... '/boot/grub/grub.cfg' (tmpfs) --> 'grub.auto.cfg'"; mv "/boot/grub/grub.cfg" "/boot/grub/grub.auto.cfg"; }
-		SUBVOLUME=$(echo ",$FSTAB_ROOT_MOUNT_OPTIONS," | sed -n 's/.*,subvol=\([^,]*\),.*/\/\1/p')
+		prefix=""
+		subvolume=""
+		boot_uuid=""
+		insmod=""
+		# TODO: if extra /boot part use that one else use rootfs/boot xD
+		if [ "$FSTAB_BOOT_BIOS_DEVICE" = "none" ] || [ -z "$FSTAB_BOOT_BIOS_DEVICE" ]; then
+			log "no separate /boot partition found, using rootfs/boot for grub.cfg"
+			boot_uuid=$FSTAB_ROOT_DEVICE
+			prefix=/boot
+			subvolume=$(echo ",$FSTAB_ROOT_MOUNT_OPTIONS," | sed -n 's/.*,subvol=\([^,]*\),.*/\/\1/p')
+			insmod="insmod $FSTAB_ROOT_DEVICE_TYPE"
+			if [ -n "$subvolume" ]; then
+				prefix="$subvolume/boot"
+				log "subvolume found: $subvolume"
+			fi
+		else
+			log "separate /boot partition found, using /boot for grub.cfg"
+			insmod="insmod fat"
+			boot_uuid=$FSTAB_BOOT_BIOS_DEVICE
+			prefix=""
+		fi
+		[ "$INSTALL_BOOTLOADER" = "grub-pc" ] && insmod+=$'\ninsmod part_msdos' # ANSI-C Quoting
+		[ "$INSTALL_BOOTLOADER" = "grub-efi" ] && insmod+=$'\ninsmod part_gpt'
+		log "building grub.cfg..."
 		cat << EOF > "$boot_directory/grub/grub.cfg"
 # Funny Note: Hey ähm wenn du das siehst hast du mich ganz schön beim basteln erwischt, mist! Führe 'sudo update-grub' aus ums zu 'heilen' xD
 # Technical Note: Yeah that was my try to make an minimal booting grub.cfg, hope it worked; that is just for once use update-grub to create original one ;-)
@@ -29,27 +52,25 @@ echo "if that will happen just google or ask any ai 'grub boot not working, shel
 echo "in any case: after this BOOTs up run $ sudo update-grub if /boot/grub/grub.cfg is not changed."
 echo ""
 echo "loading modules into bootloader..."
-insmod play
-insmod part_gpt
-insmod part_msdos
-insmod $FSTAB_ROOT_DEVICE_TYPE
+$insmod
 set timeout=0
 set default=0
 set btrfs_relative_path=y
 echo searching and selecting kernel...
-search --no-floppy --fs-uuid --set=root ${FSTAB_ROOT_DEVICE:5}
-echo loading kernel ($SUBVOLUME/vmlinuz) into memory...
-linux $SUBVOLUME/boot/vmlinuz root=$FSTAB_ROOT_DEVICE rootflags=$FSTAB_ROOT_MOUNT_OPTIONS $KERNEL_CMDLINE
-echo loading initramfs ($SUBVOLUME/initrd.img) into memory...
-initrd $SUBVOLUME/boot/initrd.img
+search --no-floppy --fs-uuid --set=root ${boot_uuid:5}
+echo loading kernel ($prefix/vmlinuz) into memory...
+linux $prefix/vmlinuz root=$FSTAB_ROOT_DEVICE rootflags=$FSTAB_ROOT_MOUNT_OPTIONS $KERNEL_CMDLINE
+echo loading initramfs ($prefix/initrd.img) into memory...
+initrd $prefix/initrd.img
 echo OK.
-echo playing sound...
+echo playing sound... (Star Wars: Imperial March)
+insmod play
 play 480 440 4 440 4 440 4 349 3 523 1 440 4 349 3 523 1 440 8 659 4 659 4 659 4 698 3 523 1 415 4 349 3 523 1 440 8
 echo booting loaded kernel...
 boot
 EOF
 		log "hacky grub.cfg created. continue..."
-		sleep 15;
+		#sleep 15;
 	elif [ $? -ne 0 ] && [[ -f "/boot/grub/grub.cfg" || -f "$boot_directory/grub/grub.cfg" ]]; then
 		log "Error with grub-update! using hack xD\nINFO: /boot/grub/grub.cfg exists, maybe u have luck and it will boot! continue ...";
 		sleep 15;
