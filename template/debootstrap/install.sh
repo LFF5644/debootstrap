@@ -11,7 +11,8 @@ IFS=',' read -ra STEPS <<< "$INSTALL_STEPS"
 
 for STEP in "${STEPS[@]}"; do
     for script in /debootstrap/"$STEP"/*.sh; do
-        [ -e "$script" ] || continue
+		log "SCRIPT: $script"
+        [ -e "$script" ] || { echo "skipping script '$script'"; continue; }
         . "$script" || { log "Error executing $script"; sleep 60; exit 1; }
     done
 done

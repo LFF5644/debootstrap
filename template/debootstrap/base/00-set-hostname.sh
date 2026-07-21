@@ -9,5 +9,6 @@ log "set hostname to $NEW_HOSTNAME"
 echo "$NEW_HOSTNAME" > /etc/hostname
 hostname "$NEW_HOSTNAME"
 
+log "modifying /etc/hosts to reflect new hostname ..."
 echo -e "# LOCALHOST\n127.0.0.1	$NEW_HOSTNAME" > /etc/hosts
 cat /debootstrap/backup/hosts.bak >> /etc/hosts
