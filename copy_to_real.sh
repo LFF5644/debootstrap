@@ -7,4 +7,5 @@ mount "$FSTAB_ROOT_DEVICE" "$ROOT_TARGET" -t $FSTAB_ROOT_DEVICE_TYPE -o "$FSTAB_
 echo "Starting copy to real device... $ROOT_INSTALL --> $ROOT_TARGET"
 time sudo cp -a "$ROOT_INSTALL/." "$ROOT_TARGET"; time sync
 echo "copy to real device completed."
+df -h | grep -E "^Dateisystem|Filesystem|$ROOT_TARGET"
 umount "$ROOT_TARGET"
