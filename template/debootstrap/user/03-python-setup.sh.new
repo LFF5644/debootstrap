@@ -1,0 +1,18 @@
+# NOT TESTED
+echo skip python install
+exit 0
+
+# install
+python3-full
+
+# exec as root
+python3 -m venv /opt/python-venv
+addgroup --system python
+usermod -aG python USER
+
+# setting permission
+chmod 2770 -R /opt/python-venv
+chown root:python -R /opt/python-venv
+
+ls -lah /opt/python-venv
+echo -e "\n# Python3-venv install\nPATH=/opt/python-venv/bin:$PATH\n" >> /etc/skel/.bashrc
