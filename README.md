@@ -12,7 +12,7 @@ cd /media/storage/Dateien/Dokus/Linux/scripts/debootstrap
 ./debootstrap.sh
 ```
 
-Hinweis: `debootstrap.sh` mountet/bindet /dev,/proc,/sys und führt `chroot $target_root /debootstrap/install.sh` aus.
+Hinweis: `debootstrap.sh` mountet/bindet /dev,/proc,/sys und führt `chroot $ROOT_INSTALL /debootstrap/install.sh` aus.
 
 **Wichtige Dateien**
 - **Konfiguration:** [config.env](config.env)
