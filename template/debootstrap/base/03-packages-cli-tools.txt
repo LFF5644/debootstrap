@@ -1,9 +1,11 @@
-# nodejs
-# npm
-# python3
-
+# this is a comment
+#$ adb
+#$ nodejs
+#$ npm
+#$ python3
+#$ screen
+#$ xz-utils
 7zip
-adb
 btrfs-progs
 bzip2
 cmatrix
@@ -11,14 +13,10 @@ fdisk
 grep
 gzip
 htop
-less
 linux-cpupower
-nano
 ntfs-3g
 rsync
-screen
 tar
 unzip
 xxd
-xz-utils
 zstd

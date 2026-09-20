@@ -1,12 +1,13 @@
-# $ 'ip'
+# command 'ip'
 iproute2
 net-tools
-# $ 'ping'
+# command 'ping'
 iputils-ping
-# inetutils-ping
+#$ inetutils-ping
 
-# Tools
+# Tools, wget is required for debootstrap script
 wget
+#$ curl
 netcat-openbsd
 openssh-client
 iperf3
@@ -14,7 +15,7 @@ iperf3
 systemd
 systemd-resolved
 systemd-timesyncd
-# sshfs
+#$ sshfs
 
 # apt
 ca-certificates
