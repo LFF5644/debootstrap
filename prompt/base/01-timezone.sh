@@ -15,3 +15,4 @@ done
 timezone_columns=(X Zeitzone)
 TIMEZONE=$(prompt_list radio "Zeitzone auswählen" "Bitte wählen Sie Ihre Zeitzone aus der Liste aus:" " " timezone_columns entries)
 echo "Ausgewählte Zeitzone: $TIMEZONE"
+
